@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver"
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -23,10 +24,41 @@ func main() {
 		fmt.Printf("%s\n", os.Args[i])
 	}
 
-	v, err := semver.NewVersion("1.2.3-beta.1+build345")
-	if err != nil {
-		_ = fmt.Errorf("Error parsing version: %s", err)
+	// Start the app here
+
+	app := cli.NewApp()
+	app.Name = "ver"
+	app.Usage = "parse semver"
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "lang",
+			Value: "english",
+			Usage: "language for the greeting",
+		},
 	}
 
-	fmt.Printf("%s\n", v.String())
+	app.Action = func(c *cli.Context) error {
+
+		name := "someone"
+		if c.NArg() > 0 {
+			name = c.Args()[0]
+		}
+		if c.String("lang") == "spanish" {
+			fmt.Println("Hola", name)
+		} else {
+			fmt.Println("Hello", name)
+		}
+
+		v, err := semver.NewVersion("1.2.3-beta.1+build345")
+		if err != nil {
+			_ = fmt.Errorf("Error parsing version: %s", err)
+		}
+
+		fmt.Printf("%s\n", v.String())
+
+		return nil
+	}
+
+	app.Run(os.Args)
 }
