@@ -29,7 +29,9 @@ func (ct *connWrapper) Close() error {
 func main() {
 	time.Sleep(10*time.Second)
 	t := http.DefaultTransport.(*http.Transport).Clone()
-	dialer := net.Dialer{}
+	dialer := net.Dialer{
+		// KeepAlive: 1*time.Second,
+	}
 	t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 		conn, err := dialer.DialContext(ctx, network, addr)
 		if err != nil {
@@ -40,9 +42,8 @@ func main() {
 			conn,
 		}, nil
 	}
-	t.MaxIdleConnsPerHost = 10
 	c := http.Client{
-		Timeout: 3*time.Second,
+		Timeout: 2*time.Second,
 		Transport: t,
 	}
 
@@ -54,28 +55,19 @@ func main() {
 		c.CloseIdleConnections()
 		os.Exit(0)
 	}()
-
-	for i := 0; i < 10; i++ {
-		go func() {
-			time.Sleep(1*time.Second)
-			for i := 0; i < 5; i++ {
-				func (){
-					// fmt.Println("sending request in the background")
-					r, err := c.Get("http://localhost:4400")
-					defer func() {
-						if r != nil && r.Body != nil {
-							r.Body.Close()
-						}
-					}()
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-					ioutil.ReadAll(r.Body)
-				}()
+	func (){
+		r, err := c.Get("http://localhost:4400")
+		defer func() {
+			if r != nil && r.Body != nil {
+				r.Body.Close()
 			}
 		}()
-	}
-
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		val, _ := ioutil.ReadAll(r.Body)
+		fmt.Println(val)
+	}()
 	select {}
 }
