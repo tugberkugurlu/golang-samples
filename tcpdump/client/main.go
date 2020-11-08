@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -28,6 +31,21 @@ func (ct *connWrapper) Close() error {
 
 func main() {
 	time.Sleep(10*time.Second)
+
+	// Create a pool with the server certificate since it is not signed
+	// by a known CA
+	caCert, err := ioutil.ReadFile("../server.crt")
+	if err != nil {
+		log.Fatalf("Reading server certificate: %s", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	// Create TLS configuration with the certificate of the server
+	tlsConfig := &tls.Config{
+		RootCAs: caCertPool,
+	}
+
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	dialer := net.Dialer{
 		// KeepAlive: 1*time.Second,
@@ -42,6 +60,7 @@ func main() {
 			conn,
 		}, nil
 	}
+	t.TLSClientConfig = tlsConfig
 	c := http.Client{
 		Timeout: 2*time.Second,
 		Transport: t,
@@ -56,7 +75,7 @@ func main() {
 		os.Exit(0)
 	}()
 	func (){
-		r, err := c.Get("http://localhost:4400")
+		r, err := c.Get("https://localhost:4400")
 		defer func() {
 			if r != nil && r.Body != nil {
 				r.Body.Close()

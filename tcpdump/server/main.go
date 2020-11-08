@@ -10,11 +10,18 @@ type handler struct {
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter,  r *http.Request) {
-	time.Sleep(5*time.Second)
-	fmt.Println("writing response")
-	_, err := w.Write([]byte("hello world"))
-	if err != nil {
-		fmt.Println(err)
+	t := time.NewTimer(5*time.Second)
+	defer t.Stop()
+
+	select {
+	case <-r.Context().Done():
+		fmt.Println("stopped processing")
+	case <-t.C:
+		fmt.Println("writing response")
+		_, err := w.Write([]byte("hello world"))
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
@@ -24,6 +31,6 @@ func main() {
 		Handler: handler{},
 	}
 
-	err := srv.ListenAndServe()
+	err := srv.ListenAndServeTLS("../server.crt", "../server.key")
 	fmt.Println(err)
 }
