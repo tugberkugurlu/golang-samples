@@ -64,7 +64,11 @@ func main() {
 			log.Printf("HTTP Get err: %v\n", err)
 			return
 		}
-		val, _ := ioutil.ReadAll(r.Body)
+		val, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("response body read err: %v\n", err)
+			return
+		}
 		log.Printf("%d: len: %d\n", r.StatusCode, len(val))
 	}()
 	select {}
