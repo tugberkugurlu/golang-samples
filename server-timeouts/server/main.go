@@ -35,7 +35,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	srv := http.Server{
 		Addr:         ":4400",
-		Handler:      handler{},
+		Handler:      http.TimeoutHandler(handler{}, writeTimeout/2, ""),
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		ConnState: func(conn net.Conn, state http.ConnState) {

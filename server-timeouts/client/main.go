@@ -65,7 +65,7 @@ func main() {
 			return
 		}
 		val, _ := ioutil.ReadAll(r.Body)
-		log.Println(val)
+		log.Printf("%d: %s\n", r.StatusCode, string(val))
 	}()
 	select {}
 }
