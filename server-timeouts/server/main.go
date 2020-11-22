@@ -21,7 +21,7 @@ type handler struct {
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t := time.NewTimer(1 * time.Second) // simulate a long running process
+	t := time.NewTimer(writeTimeout * 2) // simulate a long running process
 	defer t.Stop()
 
 	select {
