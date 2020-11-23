@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"net"
@@ -58,7 +59,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:         ":4400",
-		Handler:      handler{},
+		Handler:      &timeoutHandler{handler{}, writeTimeout},
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		ConnState: func(conn net.Conn, state http.ConnState) {
@@ -70,4 +71,16 @@ func main() {
 
 	err := srv.ListenAndServe()
 	log.Println(err)
+}
+
+type timeoutHandler struct {
+	handler http.Handler
+	dt      time.Duration
+}
+
+func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelCtx := context.WithTimeout(r.Context(), h.dt)
+	defer cancelCtx()
+	r = r.WithContext(ctx)
+	h.handler.ServeHTTP(w, r)
 }
